@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
 import org.json.JSONArray;
@@ -22,68 +21,33 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
-    ArrayAdapter<String> mMovieAdapter;
-
-    public MainActivityFragment() {
-    }
+    private MovieAdapter mMovieAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        // test using string adapter
-        String moviesData[] = {
-                "AAA",
-                "BBB",
-                "CCC",
-                "DDD",
-                "EEE",
-                "FFF",
-                "GGG",
-                "HHH",
-                "III",
-                "JJJ",
-                "KKK",
-                "LLL",
-                "MMM",
-                "NNN",
-                "OOO",
-                "PPP",
-                "QQQ",
-                "RRR",
-                "SSS",
-                "TTT",
-                "UUU",
-                "VVV",
-                "WWW",
-                "XXX",
-                "YYY",
-                "ZZZ"
-        };
-        List<String> movieListString = new ArrayList<String>(Arrays.asList(moviesData));
         mMovieAdapter =
-        new ArrayAdapter<String>(
-           getActivity(), // The current context (this activity)
-              R.layout.list_item_movie, // The name of the layout ID.
-              R.id.list_item_movie_textview, // The ID of the textview to populate.
-              movieListString);
+                new MovieAdapter(
+                        getActivity(), // The current context (this activity)
+                        R.layout.list_item_movie, // The name of the layout ID.
+                        new ArrayList<MovieObject>());
         GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
         gridView.setAdapter(mMovieAdapter);
-        new FetchMovieTask().execute();
 
+        new FetchMovieTask().execute();
         return rootView;
     }
-    public class FetchMovieTask extends AsyncTask<String, Void, String[]> {
+    public class FetchMovieTask extends AsyncTask<String, Void, List<MovieObject>> {
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
         @Override
-        protected String[] doInBackground(String... params) {
+        protected List<MovieObject> doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -157,41 +121,56 @@ public class MainActivityFragment extends Fragment {
 
             return null;
         }
-        private String[] getMovieDataFromJson(String movieJsonStr)
+        private List<MovieObject> getMovieDataFromJson(String movieJsonStr)
                 throws JSONException {
 
             // These are the names of the JSON objects that need to be extracted.
             final String OWM_RESULTS = "results";
             final String OWM_TITLE = "title";
+            final String OWN_OVERVIEW = "overview";
+            final String OWN_ID = "id";
+            final String OWN_ORIGINAL_TITLE = "original_title";
+            final String OWN_POSTER_PATH = "poster_path";
+            final String OWN_BACKDROP_PATH = "backdrop_path";
+            final String OWN_RELEASE_DATE = "release_date";
+            final String OWN_POPULARITY = "popularity";
+            final String OWN_VOTE_AVERAGE = "vote_average";
+            final String OWN_ADULT = "adult";
 
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieArray = movieJson.getJSONArray(OWM_RESULTS);
 
-            String[] resultStrs = new String[movieArray.length()];
+           List<MovieObject> results = new ArrayList<MovieObject>();
             for (int i = 0; i < movieArray.length(); i++) {
-                // For now, using the format "Day, description, hi/low"
-                String title;
                 // Get the JSON object representing one movie
+                MovieObject mobj = new MovieObject();
                 JSONObject movie = movieArray.getJSONObject(i);
-                title = movie.getString(OWM_TITLE);
-                resultStrs[i] = title;
+                mobj.id = movie.getInt(OWN_ID);
+                mobj.title = movie.getString(OWM_TITLE);
+                mobj.overview = movie.getString(OWN_OVERVIEW);
+                mobj.original_tile = movie.getString(OWN_ORIGINAL_TITLE);
+                mobj.poster_path = movie.getString(OWN_POSTER_PATH);
+                mobj.backdrop_path = movie.getString(OWN_BACKDROP_PATH);
+                mobj.release_date = movie.getString(OWN_RELEASE_DATE);
+                mobj.popularity = movie.getDouble(OWN_POPULARITY);
+                mobj.vote_average = movie.getDouble(OWN_VOTE_AVERAGE);
+                mobj.adult = movie.getBoolean(OWN_ADULT);
+                results.add(mobj);
             }
 
-            for (String s : resultStrs) {
-                Log.v(LOG_TAG, "moviet entry: " + s);
+            for (MovieObject s : results) {
+                Log.v(LOG_TAG, "movie entry: " + s.title);
             }
-            return resultStrs;
+            return results;
         }
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(List<MovieObject> result) {
             if (result != null) {
-                mMovieAdapter.clear();
-                for(String movieStr : result) {
-                    mMovieAdapter.add(movieStr);
-                }
+                    mMovieAdapter.clear();
+                    mMovieAdapter.addAll(result);
+            } else {
                 // New data is back from the server.  Hooray!
             }
         }
-
     }
 }
