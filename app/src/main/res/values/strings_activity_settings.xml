@@ -1,0 +1,31 @@
+<resources>
+    <string name="title_activity_settings">Settings</string>
+    <string name="pref_header_general">Popular Movies Settings</string>
+    <!-- Strings related to Settings -->
+    <string name="pref_sort_label">Movies Sort By</string>
+    <string name="pref_sort_label_popularity">Popularity</string>
+    <string name="pref_sort_label_ave_rating">Vote Average</string>
+    <string name="pref_sort_label_release_date">Release Date</string>
+    <string name="pref_sort_label_revenue">Revenue</string>
+
+    <string name="pref_sort_key" translatable="false">sort</string>
+    <string name="pref_sort_popularity" translatable="false">popularity.desc</string>
+    <string name="pref_sort_ave_rating" translatable="false">vote_average.desc</string>
+    <!--<string name="pref_sort_release_date" translatable="false">release_date.desc</string> -->
+    <string name="pref_sort_revenue" translatable="false">revenue.desc</string>
+
+    <string-array name="pref_sort_options">
+        <item>@string/pref_sort_label_popularity</item>
+        <item>@string/pref_sort_label_ave_rating</item>
+        <!--        <item>@string/pref_sort_label_release_date</item> -->
+                <item>@string/pref_sort_label_revenue</item>
+            </string-array>
+
+            <string-array name="pref_sort_values">
+                <item>@string/pref_sort_popularity</item>
+                <item>@string/pref_sort_ave_rating</item>
+        <!--        <item>@string/pref_sort_release_date</item> -->
+        <item>@string/pref_sort_revenue</item>
+    </string-array>
+
+</resources>

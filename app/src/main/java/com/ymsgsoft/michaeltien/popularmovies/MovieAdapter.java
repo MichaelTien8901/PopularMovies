@@ -41,6 +41,7 @@ public class MovieAdapter extends ArrayAdapter<MovieObject> {
 
             holder = new MovieHolder();
             holder.imageIcon = (ImageView)convertView.findViewById(R.id.list_item_imageIcon);
+
             // 1. measure screen width (pixel),
             // 2. convert to dp:  / (metrics.densityDpi / 160f)
             // 3. and calculate minimum height
@@ -50,6 +51,7 @@ public class MovieAdapter extends ArrayAdapter<MovieObject> {
             int height = (int) (metrics.widthPixels / (metrics.densityDpi / 160f) *1.8);
             convertView.setMinimumHeight(height);
             holder.imageIcon.setMinimumHeight(height);
+
             //holder.textTitle = (TextView)convertView.findViewById(R.id.list_item_movie_textview);
             convertView.setTag(holder);
         }
@@ -60,7 +62,8 @@ public class MovieAdapter extends ArrayAdapter<MovieObject> {
 
         MovieObject movieObject = data.get(position);
         //holder.textTitle.setText(movieObject.title);
-        String url = "http://image.tmdb.org/t/p/w185/" + movieObject.poster_path;
+        //String url = "http://image.tmdb.org/t/p/w185/" + movieObject.poster_path;
+        String url = context.getString(R.string.picture_url_prefix) + movieObject.poster_path;
         Picasso.with(this.context).load(url).into(holder.imageIcon);
 
         return convertView;

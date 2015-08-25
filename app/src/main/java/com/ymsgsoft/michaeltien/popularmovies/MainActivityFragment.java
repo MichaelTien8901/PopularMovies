@@ -1,13 +1,17 @@
 package com.ymsgsoft.michaeltien.popularmovies;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 
 import org.json.JSONArray;
@@ -39,11 +43,38 @@ public class MainActivityFragment extends Fragment {
                         R.layout.list_item_movie, // The name of the layout ID.
                         new ArrayList<MovieObject>());
         GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
-        gridView.setAdapter(mMovieAdapter);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
-        new FetchMovieTask().execute();
+                MovieObject movie_object = mMovieAdapter.getItem(position);
+                Intent detail_intent = new Intent(getActivity(), DetailActivity.class);
+                String prefix = getString(R.string.package_prefix);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_original_title), movie_object.original_tile);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_overview), movie_object.overview);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_poster_path), movie_object.poster_path);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_release_date), movie_object.release_date);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_vote_average), movie_object.vote_average);
+                startActivity(detail_intent);
+            }
+        });
+        gridView.setAdapter(mMovieAdapter);
+        //UpdateMoviesList();
         return rootView;
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        UpdateMoviesList();
+    }
+
+    private void UpdateMoviesList() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sort_by = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popularity));
+        new FetchMovieTask().execute(sort_by);
+    }
+
     public class FetchMovieTask extends AsyncTask<String, Void, List<MovieObject>> {
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
         @Override
@@ -63,9 +94,13 @@ public class MainActivityFragment extends Fragment {
                 final String SORT_PARAM = "sort_by";
                 final String API_KEY_PARAM = "api_key";
                 String api_key = getString(R.string.API_key);
+                // sort string from preference settings
+                //String sort_by = sharedPref.getString(getString(R.string.pref_sort_key), "popularity.desc");
+                String sort_by = params[0];
+
                 Uri builtUri = Uri.parse(MOVIEDB_BASE_URL).buildUpon()
-                        .appendQueryParameter(SORT_PARAM, "popularity.desc")
-                                .appendQueryParameter(API_KEY_PARAM, api_key )
+                        .appendQueryParameter(SORT_PARAM, sort_by)
+                                .appendQueryParameter(API_KEY_PARAM, api_key)
                         .build();
                 URL url = new URL(builtUri.toString());
 
@@ -136,9 +171,15 @@ public class MainActivityFragment extends Fragment {
             final String OWN_POPULARITY = "popularity";
             final String OWN_VOTE_AVERAGE = "vote_average";
             final String OWN_ADULT = "adult";
+            final String OWN_PAGE = "page";
+            final String OWN_TOTAL_PAGES = "total_pages";
+            final String OWN_TOTAL_RESULTS = "total_results";
 
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieArray = movieJson.getJSONArray(OWM_RESULTS);
+            int page = movieJson.getInt(OWN_PAGE);
+            int total_pages = movieJson.getInt( OWN_TOTAL_PAGES);
+            int total_results = movieJson.getInt( OWN_TOTAL_RESULTS);
 
            List<MovieObject> results = new ArrayList<MovieObject>();
             for (int i = 0; i < movieArray.length(); i++) {
