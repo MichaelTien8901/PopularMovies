@@ -29,12 +29,15 @@ public class DetailActivityFragment extends Fragment {
         String poster_url = getString(R.string.picture_url_prefix) + intent.getStringExtra(prefix+getString(R.string.intent_key_poster_path ));
         String overview = intent.getStringExtra(prefix + getString(R.string.intent_key_overview));
         String release_date = intent.getStringExtra(prefix + getString(R.string.intent_key_release_date));
+        Double vote_average = intent.getDoubleExtra(prefix + getString(R.string.intent_key_vote_average), 0);
+
         Picasso.with(getActivity()).load(poster_url).into((ImageView) rootView.findViewById( R.id.detail_imageView));
         // loading
         TextView textView = (TextView) rootView.findViewById(R.id.detail_textview);
         textView.setText(title);
         ((TextView) rootView.findViewById(R.id.overview_textView)).setText(overview);
-        ((TextView) rootView.findViewById(R.id.release_date_text_view)).setText(release_date);
+        ((TextView) rootView.findViewById(R.id.release_date_text_view)).setText(release_date.substring(0,4));
+        ((TextView) rootView.findViewById(R.id.rating_text_view)).setText( String.format("%.1f / 10", vote_average));
         return rootView;
     }
 }
