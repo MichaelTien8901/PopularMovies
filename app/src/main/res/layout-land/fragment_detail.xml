@@ -20,8 +20,8 @@
                android:layout_height="match_parent">
 
                <ImageView
-                   android:layout_width="fill_parent"
-                   android:layout_height="200dp"
+                   android:layout_width="match_parent"
+                   android:layout_height="240dp"
                    android:id="@+id/detail_backdrop_imageView"
                    android:scaleType="fitXY" />
 
@@ -34,7 +34,8 @@
                     android:textStyle="bold"
                     android:gravity="center"
                     android:background="#80000000"
-                   android:layout_gravity="bottom" />
+                   android:layout_gravity="bottom"
+                   android:autoText="false" />
            </FrameLayout>
 
            <LinearLayout

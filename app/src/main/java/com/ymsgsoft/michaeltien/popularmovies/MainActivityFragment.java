@@ -50,9 +50,11 @@ public class MainActivityFragment extends Fragment {
                 MovieObject movie_object = mMovieAdapter.getItem(position);
                 Intent detail_intent = new Intent(getActivity(), DetailActivity.class);
                 String prefix = getString(R.string.package_prefix);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_id), movie_object.id );
                 detail_intent.putExtra(prefix+getString(R.string.intent_key_original_title), movie_object.original_tile);
                 detail_intent.putExtra(prefix+getString(R.string.intent_key_overview), movie_object.overview);
                 detail_intent.putExtra(prefix+getString(R.string.intent_key_poster_path), movie_object.poster_path);
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_backdrop_path), movie_object.backdrop_path);
                 detail_intent.putExtra(prefix+getString(R.string.intent_key_release_date), movie_object.release_date);
                 detail_intent.putExtra(prefix+getString(R.string.intent_key_vote_average), movie_object.vote_average);
                 startActivity(detail_intent);
