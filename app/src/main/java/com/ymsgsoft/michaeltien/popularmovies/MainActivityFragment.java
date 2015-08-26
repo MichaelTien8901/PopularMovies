@@ -171,15 +171,15 @@ public class MainActivityFragment extends Fragment {
             final String OWN_POPULARITY = "popularity";
             final String OWN_VOTE_AVERAGE = "vote_average";
             final String OWN_ADULT = "adult";
-            final String OWN_PAGE = "page";
-            final String OWN_TOTAL_PAGES = "total_pages";
-            final String OWN_TOTAL_RESULTS = "total_results";
+            //final String OWN_PAGE = "page";
+            //final String OWN_TOTAL_PAGES = "total_pages";
+            //final String OWN_TOTAL_RESULTS = "total_results";
 
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieArray = movieJson.getJSONArray(OWM_RESULTS);
-            int page = movieJson.getInt(OWN_PAGE);
-            int total_pages = movieJson.getInt( OWN_TOTAL_PAGES);
-            int total_results = movieJson.getInt( OWN_TOTAL_RESULTS);
+            //int page = movieJson.getInt(OWN_PAGE);
+            //int total_pages = movieJson.getInt( OWN_TOTAL_PAGES);
+            //int total_results = movieJson.getInt( OWN_TOTAL_RESULTS);
 
            List<MovieObject> results = new ArrayList<MovieObject>();
             for (int i = 0; i < movieArray.length(); i++) {
@@ -210,7 +210,7 @@ public class MainActivityFragment extends Fragment {
                     mMovieAdapter.clear();
                     mMovieAdapter.addAll(result);
             } else {
-                // New data is back from the server.  Hooray!
+                //
             }
         }
     }
