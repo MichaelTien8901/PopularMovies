@@ -4,7 +4,7 @@ package com.ymsgsoft.michaeltien.popularmovies;
  * Created by Michael Tien on 2015/8/24.
  */
 class MovieObject {
-    public int id;
+    public String id_string;
     public String title;
     public String original_tile;
     public String overview;
@@ -13,5 +13,4 @@ class MovieObject {
     public String release_date;
     public Double popularity;
     public Double vote_average;
-    public boolean adult;
 }

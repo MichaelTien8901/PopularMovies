@@ -84,6 +84,13 @@
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:id="@+id/overview_textView" />
 
+           <Button
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:text="Watch Trailer"
+               android:id="@+id/trailer_button"
+               android:clickable="true" />
+
        </LinearLayout>
     </ScrollView>
 
