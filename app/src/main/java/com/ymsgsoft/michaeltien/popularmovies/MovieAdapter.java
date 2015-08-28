@@ -77,13 +77,11 @@ public class MovieAdapter extends ArrayAdapter<MovieObject> {
                 .into(holder.imageIcon, new Callback() {
                     @Override
                     public void onSuccess() {
-
+                        // not get called.  Maybe Picasso bug
                     }
-
                     @Override
                     public void onError() {
                        holder.textTitle.setVisibility(View.VISIBLE);
-
                     }
                 });
 

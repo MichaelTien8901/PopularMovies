@@ -5,6 +5,7 @@
 
     <!-- Strings related to Intent Detail -->
     <string name="package_prefix" translatable="false">com.ymsgsoft.michaeltien.popularmovies.</string>
+    <!--
     <string name="intent_key_id" translatable="false">id</string>
     <string name="intent_key_original_title" translatable="false">original_title</string>
     <string name="intent_key_overview" translatable="false">overview</string>
@@ -12,8 +13,11 @@
     <string name="intent_key_vote_average" translatable="false">vote_average</string>
     <string name="intent_key_poster_path" translatable="false">poster_path</string>
     <string name="intent_key_backdrop_path" translatable="false">backdrop_path</string>
+    -->
+    <string name="intent_key_movie_object" translatable="false">movie_object</string>
     <!-- Strings for TMDB url picture-->
     <string name="picture_url_prefix" translatable="false">http://image.tmdb.org/t/p/w185/</string>
     <string name="backdrop_url_prefix" translatable="false">http://image.tmdb.org/t/p/w780/</string>
     <string name="content_description">movie_poster</string>
+    <string name="server_error">Server error.  Try later!</string>
 </resources>

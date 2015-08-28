@@ -1,5 +1,6 @@
 package com.ymsgsoft.michaeltien.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -12,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -40,21 +42,16 @@ public class DetailActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-        Intent intent = getActivity().getIntent();
         String intent_key_prefix = getString(R.string.package_prefix);
-        String movie_id;
-        movie_id = intent.getStringExtra(intent_key_prefix + getString(R.string.intent_key_id));
-        new FetchMovieExtraTask().execute(movie_id);
+        Intent intent = getActivity().getIntent();
+        // get movie object from intent via Parcel
+        MovieObject movieObject = intent.getParcelableExtra(intent_key_prefix + getString(R.string.intent_key_movie_object));
 
-        String title = intent.getStringExtra(intent_key_prefix + getString(R.string.intent_key_original_title));
-        String poster_url = getString(R.string.picture_url_prefix) + intent.getStringExtra(intent_key_prefix+getString(R.string.intent_key_poster_path ));
-        String backdrop_url = getString(R.string.backdrop_url_prefix) + intent.getStringExtra(intent_key_prefix+getString(R.string.intent_key_backdrop_path ));
-        String overview = intent.getStringExtra(intent_key_prefix + getString(R.string.intent_key_overview));
-        String release_date = intent.getStringExtra(intent_key_prefix + getString(R.string.intent_key_release_date));
-        Double vote_average = intent.getDoubleExtra(intent_key_prefix + getString(R.string.intent_key_vote_average), 0);
-
-        Picasso.with(getActivity())
-                .load(poster_url)
+        new FetchMovieExtraTask().execute(movieObject.id_string);
+        String post_url = getString(R.string.picture_url_prefix) + movieObject.poster_path;
+        String backdrop_url = getString(R.string.backdrop_url_prefix) + movieObject.backdrop_path;
+                Picasso.with(getActivity())
+                .load(post_url)
                 .placeholder(R.drawable.loading)
                 .error(R.drawable.nomovie)
                 .into((ImageView) rootView.findViewById(R.id.detail_imageView));
@@ -65,10 +62,10 @@ public class DetailActivityFragment extends Fragment {
                 .into((ImageView) rootView.findViewById(R.id.detail_backdrop_imageView));
         // loading
         TextView textView = (TextView) rootView.findViewById(R.id.detail_title_textView);
-        textView.setText(title);
-        ((TextView) rootView.findViewById(R.id.overview_textView)).setText(overview);
-        ((TextView) rootView.findViewById(R.id.release_date_text_view)).setText(release_date.substring(0, 4));
-        ((TextView) rootView.findViewById(R.id.rating_text_view)).setText(String.format("%.1f / 10", vote_average));
+        textView.setText(movieObject.title);
+        ((TextView) rootView.findViewById(R.id.overview_textView)).setText(movieObject.overview);
+        ((TextView) rootView.findViewById(R.id.release_date_text_view)).setText(movieObject.release_date.substring(0, 4));
+        ((TextView) rootView.findViewById(R.id.rating_text_view)).setText(String.format("%.1f / 10", movieObject.vote_average));
         mTrailerButton = (Button) rootView.findViewById(R.id.trailer_button);
         mTrailerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -218,17 +215,19 @@ public class DetailActivityFragment extends Fragment {
         protected void onPostExecute(MovieExtraData result) {
             if (result != null) {
                 if (result.trailer != null) {
-                    mTrailerButton.setText("Trailer");
                     mTrailerButton.setClickable(true);
-                    mTrailerButton.setTag((Object) result.trailer);
+                    mTrailerButton.setTag(result.trailer);
                 } else {
                     mTrailerButton.setText("No Trailer");
                     mTrailerButton.setClickable(false);
                 }
-                //mMovieAdapter.clear();
-                //mMovieAdapter.addAll(result);
             } else {
-                //
+                mTrailerButton.setVisibility(View.INVISIBLE);
+                // nothing retrieved, show error
+                Context context = getActivity();
+                CharSequence text = context.getString(R.string.server_error);
+                int duration = Toast.LENGTH_LONG;
+                Toast.makeText(context, text, duration).show();
             }
         }
     }

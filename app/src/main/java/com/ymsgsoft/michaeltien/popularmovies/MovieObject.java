@@ -56,5 +56,19 @@ class MovieObject implements Parcelable {
         this.popularity = data2[0];
         this.vote_average = data2[1];
     }
-    public MovieObject() {}
+
+    public MovieObject() {
+    }
+
+    public static final Creator<MovieObject> CREATOR
+            = new Creator<MovieObject>() {
+        public MovieObject createFromParcel(Parcel in) {
+            return new MovieObject(in);
+        }
+
+        @Override
+        public MovieObject[] newArray(int asize) {
+            return new MovieObject[asize];
+        }
+    };
 }

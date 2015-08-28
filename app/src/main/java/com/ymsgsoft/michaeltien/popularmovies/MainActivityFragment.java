@@ -1,5 +1,6 @@
 package com.ymsgsoft.michaeltien.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,13 +56,8 @@ public class MainActivityFragment extends Fragment {
                 MovieObject movie_object = mMovieAdapter.getItem(position);
                 Intent detail_intent = new Intent(getActivity(), DetailActivity.class);
                 String prefix = getString(R.string.package_prefix);
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_id), movie_object.id_string );
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_original_title), movie_object.original_tile);
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_overview), movie_object.overview);
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_poster_path), movie_object.poster_path);
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_backdrop_path), movie_object.backdrop_path);
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_release_date), movie_object.release_date);
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_vote_average), movie_object.vote_average);
+                // putExtra a parcel movie object
+                detail_intent.putExtra(prefix+getString(R.string.intent_key_movie_object), movie_object);
                 startActivity(detail_intent);
             }
         });
@@ -118,8 +115,6 @@ public class MainActivityFragment extends Fragment {
             BufferedReader reader = null;
             String popularMovieJsonStr = null;
             // Will contain the raw JSON response as a string.
-
-            //if ( popularMovieJsonStr == null ) {
             if ( mMoveList != null ) return null;
             try {
                 // http://openweathermap.org/API#forecast
@@ -187,7 +182,6 @@ public class MainActivityFragment extends Fragment {
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
             }
-
             return null;
         }
         private List<MovieObject> getMovieDataFromJson(String movieJsonStr)
@@ -247,6 +241,12 @@ public class MainActivityFragment extends Fragment {
             if (mMoveList != null ) {
                 mMovieAdapter.clear();
                 mMovieAdapter.addAll(mMoveList);
+            } else {
+                // nothing retrieved, show error
+                Context context = getActivity();
+                CharSequence text = context.getString(R.string.server_error);
+                int duration = Toast.LENGTH_LONG;
+                Toast.makeText(context, text, duration).show();
             }
         }
     }
