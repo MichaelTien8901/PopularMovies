@@ -1,14 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    >
 
     <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/list_item_imageIcon"
-        android:layout_gravity="center_horizontal"
-        android:minHeight="?android:attr/listPreferredItemHeight"
-        android:scaleType="fitXY" />
+        android:minHeight="240dp"
+        android:scaleType="fitXY"
+        android:minWidth="160dp"
+        android:nestedScrollingEnabled="false" />
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id = "@+id/list_item_title"
+        android:textColor="#f7fbff"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="#80000000"
+        android:layout_gravity="bottom"
+        android:text="this is movie title" />
 
-</LinearLayout>
+</FrameLayout>

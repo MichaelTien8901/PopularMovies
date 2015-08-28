@@ -53,8 +53,16 @@ public class DetailActivityFragment extends Fragment {
         String release_date = intent.getStringExtra(intent_key_prefix + getString(R.string.intent_key_release_date));
         Double vote_average = intent.getDoubleExtra(intent_key_prefix + getString(R.string.intent_key_vote_average), 0);
 
-        Picasso.with(getActivity()).load(poster_url).into((ImageView) rootView.findViewById( R.id.detail_imageView));
-        Picasso.with(getActivity()).load(backdrop_url).into((ImageView) rootView.findViewById( R.id.detail_backdrop_imageView));
+        Picasso.with(getActivity())
+                .load(poster_url)
+                .placeholder(R.drawable.loading)
+                .error(R.drawable.nomovie)
+                .into((ImageView) rootView.findViewById(R.id.detail_imageView));
+        Picasso.with(getActivity())
+                .load(backdrop_url)
+                .placeholder(R.drawable.loading)
+                .error(R.drawable.nomovie)
+                .into((ImageView) rootView.findViewById(R.id.detail_backdrop_imageView));
         // loading
         TextView textView = (TextView) rootView.findViewById(R.id.detail_title_textView);
         textView.setText(title);
