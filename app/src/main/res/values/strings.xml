@@ -5,6 +5,8 @@
 
     <!-- Strings related to Intent Detail -->
     <string name="package_prefix" translatable="false">com.ymsgsoft.michaeltien.popularmovies.</string>
+    <string name="content_authority">com.ymsgsoft.michaeltien.popularmovies</string>
+
     <!--
     <string name="intent_key_id" translatable="false">id</string>
     <string name="intent_key_original_title" translatable="false">original_title</string>
