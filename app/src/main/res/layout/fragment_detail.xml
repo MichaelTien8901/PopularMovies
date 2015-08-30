@@ -61,6 +61,7 @@
                     <TextView
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:id="@+id/release_date_text_view"
                         android:singleLine="false"
@@ -70,11 +71,28 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:textAppearance="?android:attr/textAppearanceMedium"
                         android:id="@+id/rating_text_view"
                         android:textStyle="bold"
                         android:paddingLeft="10dp"
-                        android:paddingTop="10dp" />
+                        android:paddingTop="10dp"
+                        />
+
+                    <CheckedTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:text="Favorite"
+                        android:id="@+id/favorite_checkedTextView"
+                        android:clickable="true"
+                        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+                        android:paddingLeft="10dp"
+                        android:textIsSelectable="false"
+                        android:textSize="20sp"
+                        android:singleLine="false"
+                        android:paddingTop="2dp" />
+
                 </LinearLayout>
             </LinearLayout>
 

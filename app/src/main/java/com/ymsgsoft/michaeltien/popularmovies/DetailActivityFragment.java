@@ -1,7 +1,9 @@
 package com.ymsgsoft.michaeltien.popularmovies;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -11,11 +13,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
+import com.ymsgsoft.michaeltien.popularmovies.data.MovieContract.MovieEntry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,12 +31,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
 /**
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
     private Button mTrailerButton;
+    private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
 
     public DetailActivityFragment() {
@@ -42,10 +46,39 @@ public class DetailActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        favoriteTextView = (CheckedTextView) rootView.findViewById(R.id.favorite_checkedTextView);
         String intent_key_prefix = getString(R.string.package_prefix);
         Intent intent = getActivity().getIntent();
         // get movie object from intent via Parcel
-        MovieObject movieObject = intent.getParcelableExtra(intent_key_prefix + getString(R.string.intent_key_movie_object));
+        final MovieObject movieObject = intent.getParcelableExtra(intent_key_prefix + getString(R.string.intent_key_movie_object));
+        favoriteTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if ( favoriteTextView.isChecked()) {
+                    favoriteTextView.setChecked(false);
+                    // delete from list
+                    int rowCount = getActivity().getContentResolver().delete(MovieEntry.buildMovieUri(Integer.parseInt(movieObject.id_string)), null, null);
+                } else {
+                    favoriteTextView.setChecked(true);
+                    // add to list
+                    ContentValues values = createMovieValues(movieObject);
+                    Uri movieInsertUri = getActivity().getContentResolver().insert(MovieEntry.CONTENT_URI, values );
+                }
+            }
+            private ContentValues createMovieValues(MovieObject mv) {
+                ContentValues movieValues = new ContentValues();
+                movieValues.put(MovieEntry.COLUMN_MOVIE_ID, Integer.parseInt(mv.id_string ));
+                movieValues.put(MovieEntry.COLUMN_TITLE, mv.title );
+                movieValues.put(MovieEntry.COLUMN_ORIGINAL_TITLE, mv.original_tile );
+                movieValues.put(MovieEntry.COLUMN_OVERVIEW, mv.overview);
+                movieValues.put(MovieEntry.COLUMN_POSTER_PATH, mv.poster_path );
+                movieValues.put(MovieEntry.COLUMN_BACKDROP_PATH, mv.backdrop_path );
+                movieValues.put(MovieEntry.COLUMN_RELEASE_DATE, mv.release_date);
+                movieValues.put(MovieEntry.COLUMN_POPULARITY, mv.popularity );
+                movieValues.put(MovieEntry.COLUMN_VOTE_AVERAGE, mv.vote_average);
+                return movieValues;
+            }
+        });
 
         new FetchMovieExtraTask().execute(movieObject.id_string);
         String post_url = getString(R.string.picture_url_prefix) + movieObject.poster_path;
@@ -90,6 +123,7 @@ public class DetailActivityFragment extends Fragment {
     private class MovieExtraData {
         String trailer;
         String[] reviews;
+        Boolean isFavorite;
     };
 
     public class FetchMovieExtraTask extends AsyncTask<String, Void, MovieExtraData> {
@@ -98,6 +132,7 @@ public class DetailActivityFragment extends Fragment {
         protected MovieExtraData doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
+            String id_string = params[0];
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
@@ -108,7 +143,6 @@ public class DetailActivityFragment extends Fragment {
                 //  http://api.themoviedb.org/3/movie/102899?api_key=[key]&append_to_response=trailers,reviews
                 final String MOVIEDB_BASE_URL =
                         "http://api.themoviedb.org/3/movie";
-                String id_string = params[0];
                 final String API_KEY_PARAM = "api_key";
                 String api_key = getString(R.string.API_key);
                 final String EXTRA_PARAM = "append_to_response";
@@ -166,7 +200,16 @@ public class DetailActivityFragment extends Fragment {
                 }
             }
             try {
-                return getMovieExtraDataFromJson(movieExtraDataJsonStr);
+                MovieExtraData retData = getMovieExtraDataFromJson(movieExtraDataJsonStr);
+                Cursor cursor = getContext().getContentResolver().query(
+                        MovieEntry.buildMovieUri(Integer.parseInt(id_string)),
+                        null,
+                        null,
+                        null,
+                        null
+                );
+                retData.isFavorite = (cursor.getCount() >= 1);
+                return retData;
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
             }
@@ -217,6 +260,7 @@ public class DetailActivityFragment extends Fragment {
                 if (result.trailer != null) {
                     mTrailerButton.setClickable(true);
                     mTrailerButton.setTag(result.trailer);
+                    favoriteTextView.setChecked(result.isFavorite);
                 } else {
                     mTrailerButton.setText("No Trailer");
                     mTrailerButton.setClickable(false);
