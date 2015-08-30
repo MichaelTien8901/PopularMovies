@@ -3,6 +3,7 @@ package com.ymsgsoft.michaeltien.popularmovies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,6 +17,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
+
+import com.ymsgsoft.michaeltien.popularmovies.data.MovieContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -94,17 +97,86 @@ public class MainActivityFragment extends Fragment {
         UpdateMoviesList();
     }
 
-    private void UpdateMoviesList() {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sort_by = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popularity));
-        if (!sort_by.equals(previousSortOrder)) {
-//            popularMovieJsonStr = null;
-            mMoveList = null;
+    public void UpdateMoviesList() {
+        if (((MainActivity) getActivity()).menu_selected == 0 ) {
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String sort_by = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popularity));
+            if (!sort_by.equals(previousSortOrder)) {
+                mMoveList = null;
+            }
+            previousSortOrder = sort_by;
+            new FetchMovieTask().execute(sort_by);
+        } else {
+            String sort_by = "favorite";
+            if (!sort_by.equals(previousSortOrder)) {
+                mMoveList = null;
+            }
+            previousSortOrder = sort_by;
+            new FetchFavoriteTask().execute();
         }
-        previousSortOrder = sort_by;
-        new FetchMovieTask().execute(sort_by);
     }
+    public class FetchFavoriteTask extends AsyncTask<String, Void, Cursor> {
+        private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
+        @Override
+        protected Cursor doInBackground(String... params) {
+            if ( mMoveList != null ) return null;
+            Cursor cursor = getActivity().getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, null);
+            return cursor;
+        }
+        List<MovieObject> getListMovieObjectFromCursor(Cursor cursor)
+        {
+            List<MovieObject> result = new ArrayList<MovieObject>();
+            if ( cursor.moveToFirst()) {
+               do {
+                   int idx;
+                   MovieObject mv = new MovieObject();
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+                   mv.id_string = Integer.toString(cursor.getInt(idx));
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE);
+                   mv.title = cursor.getString(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ORIGINAL_TITLE);
+                   mv.original_tile = cursor.getString(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_POSTER_PATH);
+                   mv.poster_path = cursor.getString(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH);
+                   mv.backdrop_path = cursor.getString(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_OVERVIEW);
+                   mv.overview = cursor.getString(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE_DATE);
+                   mv.release_date = cursor.getString(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_POPULARITY);
+                   mv.popularity = cursor.getDouble(idx);
+                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE);
+                   mv.vote_average = cursor.getDouble(idx);
+                   result.add(mv);
+               } while( cursor.moveToNext());
+               return result;
+            }
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Cursor cursor) {
+            if (cursor != null) {
+                // create List<MoveObject> for cursor
+                List<MovieObject> result = getListMovieObjectFromCursor( cursor);
+                mMovieAdapter.clear();
+                mMovieAdapter.addAll(result);
+                mMoveList = result;
+                cursor.close();
+            } else
+            if (mMoveList != null ) {
+                mMovieAdapter.clear();
+                mMovieAdapter.addAll(mMoveList);
+            } else {
+                // nothing retrieved, show error
+                Context context = getActivity();
+                CharSequence text = "Can't get favorite list";
+                int duration = Toast.LENGTH_LONG;
+                Toast.makeText(context, text, duration).show();
+            }
+        }
 
+    }
     public class FetchMovieTask extends AsyncTask<String, Void, List<MovieObject>> {
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
         @Override
