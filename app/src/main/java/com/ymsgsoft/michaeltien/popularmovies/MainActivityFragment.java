@@ -3,10 +3,12 @@ package com.ymsgsoft.michaeltien.popularmovies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -18,7 +20,7 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.ymsgsoft.michaeltien.popularmovies.data.MovieContract;
+import com.ymsgsoft.michaeltien.popularmovies.data.MovieContract.MovieEntry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,25 +35,52 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
+    @Bind(R.id.gridView) GridView gridView;
+
     private MovieAdapter mMovieAdapter;
     private String previousSortOrder = null;
     final static String MOVIE_LIST_KEY = "movie_list";
     final static String SORT_KEY = "sort";
+    public static final int COL_MOVIE_ID = 1;
+    public static final int COL_TITLE = 2;
+    public static final int COL_ORIGINAL_TITLE = 3;
+    public static final int COL_OVERVIEW = 4;
+    public static final int COL_POSTER_PATH = 5;
+    public static final int COL_BACKDROP_PATH = 6;
+    public static final int COL_RELEASE_DATE = 7;
+    public static final int COL_POPULARITY = 8;
+    public static final int COL_VOTE_AVERAGE = 9;
 
+    private void processDirtyFlag() {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mainActivity);
+        Boolean dirty_flag = sharedPref.getBoolean("FavoriteDirty", false);
+        if ( dirty_flag) {
+            sharedPref.edit().putBoolean("FavoriteDirty", false).commit();
+            if (mainActivity.menu_selected == 1 ) {
+                mMoveList = null;
+            }
+        }
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, rootView);
+        MainActivity mainActivity = (MainActivity) getActivity();
         mMovieAdapter =
                 new MovieAdapter(
-                        getActivity(), // The current context (this activity)
+                        mainActivity, // The current context (this activity)
                         R.layout.list_item_movie, // The name of the layout ID.
                         new ArrayList<MovieObject>());
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
+
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
@@ -60,7 +89,7 @@ public class MainActivityFragment extends Fragment {
                 Intent detail_intent = new Intent(getActivity(), DetailActivity.class);
                 String prefix = getString(R.string.package_prefix);
                 // putExtra a parcel movie object
-                detail_intent.putExtra(prefix+getString(R.string.intent_key_movie_object), movie_object);
+                detail_intent.putExtra(prefix + getString(R.string.intent_key_movie_object), movie_object);
                 startActivity(detail_intent);
             }
         });
@@ -68,6 +97,7 @@ public class MainActivityFragment extends Fragment {
         //UpdateMoviesList();
         return rootView;
     }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // save movie list json
@@ -84,8 +114,7 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if ( savedInstanceState != null) {
-            //popularMovieJsonStr = savedInstanceState.getString(MOVIE_LIST_KEY);
+        if (savedInstanceState != null) {
             mMoveList = (List<MovieObject>) savedInstanceState.get(MOVIE_LIST_KEY);
             previousSortOrder = savedInstanceState.getString(SORT_KEY);
         }
@@ -94,7 +123,24 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        processDirtyFlag();
         UpdateMoviesList();
+    }
+    private MovieObserver mMovieObserver;
+    @Override
+    public void onResume() {
+        super.onResume();
+        // for two panel only
+        mMovieObserver = new MovieObserver(null);
+        getActivity().getContentResolver().registerContentObserver(
+                MovieEntry.CONTENT_URI, true, mMovieObserver );
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getActivity().getContentResolver().unregisterContentObserver( mMovieObserver);
     }
 
     public void UpdateMoviesList() {
@@ -120,7 +166,13 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected Cursor doInBackground(String... params) {
             if ( mMoveList != null ) return null;
-            Cursor cursor = getActivity().getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, null);
+            Cursor cursor = getActivity()
+                    .getContentResolver()
+                    .query(MovieEntry.CONTENT_URI,
+                            null,
+                            null,
+                            null,
+                            null);
             return cursor;
         }
         List<MovieObject> getListMovieObjectFromCursor(Cursor cursor)
@@ -128,26 +180,16 @@ public class MainActivityFragment extends Fragment {
             List<MovieObject> result = new ArrayList<MovieObject>();
             if ( cursor.moveToFirst()) {
                do {
-                   int idx;
                    MovieObject mv = new MovieObject();
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                   mv.id_string = Integer.toString(cursor.getInt(idx));
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE);
-                   mv.title = cursor.getString(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ORIGINAL_TITLE);
-                   mv.original_tile = cursor.getString(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_POSTER_PATH);
-                   mv.poster_path = cursor.getString(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH);
-                   mv.backdrop_path = cursor.getString(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_OVERVIEW);
-                   mv.overview = cursor.getString(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE_DATE);
-                   mv.release_date = cursor.getString(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_POPULARITY);
-                   mv.popularity = cursor.getDouble(idx);
-                   idx = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE);
-                   mv.vote_average = cursor.getDouble(idx);
+                   mv.id_string = Integer.toString(cursor.getInt(COL_MOVIE_ID));
+                   mv.title = cursor.getString(COL_TITLE);
+                   mv.original_tile = cursor.getString(COL_ORIGINAL_TITLE);
+                   mv.overview = cursor.getString(COL_OVERVIEW);
+                   mv.poster_path = cursor.getString(COL_POSTER_PATH);
+                   mv.backdrop_path = cursor.getString(COL_BACKDROP_PATH);
+                   mv.release_date = cursor.getString(COL_RELEASE_DATE);
+                   mv.popularity = cursor.getDouble(COL_POPULARITY);
+                   mv.vote_average = cursor.getDouble(COL_VOTE_AVERAGE);
                    result.add(mv);
                } while( cursor.moveToNext());
                return result;
@@ -288,8 +330,8 @@ public class MainActivityFragment extends Fragment {
                 JSONObject movie = movieArray.getJSONObject(i);
                 mobj.id_string = movie.getString(OWN_ID);
                 mobj.title = movie.getString(OWM_TITLE);
-                mobj.overview = movie.getString(OWN_OVERVIEW);
-                mobj.original_tile = movie.getString(OWN_ORIGINAL_TITLE);
+                mobj.overview = movie.isNull(OWN_OVERVIEW)? "--- No Overview ---": movie.getString(OWN_OVERVIEW);
+                mobj.original_tile = movie.isNull(OWN_ORIGINAL_TITLE)? "--- No Title ---": movie.getString(OWN_ORIGINAL_TITLE);
                 mobj.poster_path = movie.getString(OWN_POSTER_PATH);
                 mobj.backdrop_path = movie.getString(OWN_BACKDROP_PATH);
                 mobj.release_date = movie.getString(OWN_RELEASE_DATE);
@@ -320,6 +362,29 @@ public class MainActivityFragment extends Fragment {
                 int duration = Toast.LENGTH_LONG;
                 Toast.makeText(context, text, duration).show();
             }
+        }
+    }
+    public class MovieObserver extends ContentObserver {
+        private final String LOG_TAG = MovieObserver.class.getSimpleName();
+        public MovieObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            // two panel mode, update favorite grid view
+            this.onChange(selfChange, null);
+            Log.v(LOG_TAG, "OnChange");
+            MainActivityFragment fm= (MainActivityFragment)getActivity()
+                    .getSupportFragmentManager()
+                    .findFragmentById(R.id.container);
+            new FetchFavoriteTask();
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            Log.v(LOG_TAG, "OnChange with Uri");
+
         }
     }
 }

@@ -3,10 +3,12 @@ package com.ymsgsoft.michaeltien.popularmovies;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,12 +33,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 /**
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
+    @Bind(R.id.favorite_checkedTextView)  CheckedTextView favoriteTextView;
+    @Bind(R.id.detail_title_textView) TextView titleTextView;
+    @Bind(R.id.overview_textView) TextView overviewTextView;
+    @Bind(R.id.release_date_text_view) TextView dateTextView;
+    @Bind(R.id.rating_text_view) TextView rateTextView;
     private Button mTrailerButton;
-    private CheckedTextView favoriteTextView;
+    //private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
 
     public DetailActivityFragment() {
@@ -46,7 +59,8 @@ public class DetailActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-        favoriteTextView = (CheckedTextView) rootView.findViewById(R.id.favorite_checkedTextView);
+        ButterKnife.bind(this, rootView);
+        //favoriteTextView = (CheckedTextView) rootView.findViewById(R.id.favorite_checkedTextView);
         String intent_key_prefix = getString(R.string.package_prefix);
         Intent intent = getActivity().getIntent();
         // get movie object from intent via Parcel
@@ -54,6 +68,12 @@ public class DetailActivityFragment extends Fragment {
         favoriteTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // set dirty flag
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putBoolean("FavoriteDirty", true);
+                editor.commit();
+
                 if ( favoriteTextView.isChecked()) {
                     favoriteTextView.setChecked(false);
                     // delete from list
@@ -94,11 +114,10 @@ public class DetailActivityFragment extends Fragment {
                 .error(R.drawable.nomovie)
                 .into((ImageView) rootView.findViewById(R.id.detail_backdrop_imageView));
         // loading
-        TextView textView = (TextView) rootView.findViewById(R.id.detail_title_textView);
-        textView.setText(movieObject.title);
-        ((TextView) rootView.findViewById(R.id.overview_textView)).setText(movieObject.overview);
-        ((TextView) rootView.findViewById(R.id.release_date_text_view)).setText(movieObject.release_date.substring(0, 4));
-        ((TextView) rootView.findViewById(R.id.rating_text_view)).setText(String.format("%.1f / 10", movieObject.vote_average));
+        titleTextView.setText(movieObject.title);
+        overviewTextView.setText(movieObject.overview);
+        dateTextView.setText(movieObject.release_date.substring(0, 4));
+        rateTextView.setText(String.format("%.1f / 10", movieObject.vote_average));
         mTrailerButton = (Button) rootView.findViewById(R.id.trailer_button);
         mTrailerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -121,7 +140,7 @@ public class DetailActivityFragment extends Fragment {
         }
     }
     private class MovieExtraData {
-        String trailer;
+        String[] trailers;
         String[] reviews;
         Boolean isFavorite;
     };
@@ -135,7 +154,7 @@ public class DetailActivityFragment extends Fragment {
             String id_string = params[0];
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
-
+            MovieExtraData retData = new MovieExtraData();
             // Will contain the raw JSON response as a string.
             String movieExtraDataJsonStr = null;
 
@@ -165,7 +184,7 @@ public class DetailActivityFragment extends Fragment {
                 InputStream inputStream = urlConnection.getInputStream();
                 StringBuffer buffer = new StringBuffer();
                 if (inputStream == null) {
-                    return null;
+                    throw new IOException("can't open IO Stream");
                 }
                 reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -179,14 +198,13 @@ public class DetailActivityFragment extends Fragment {
 
                 if (buffer.length() == 0) {
                     // Stream was empty.  No point in parsing.
-                    return null;
+                    throw new IOException("stream empty");
                 }
                 movieExtraDataJsonStr = buffer.toString();
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
                 // If the code didn't successfully get the weather data, there's no point in attemping
                 // to parse it.
-                return null;
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -200,21 +218,20 @@ public class DetailActivityFragment extends Fragment {
                 }
             }
             try {
-                MovieExtraData retData = getMovieExtraDataFromJson(movieExtraDataJsonStr);
-                Cursor cursor = getContext().getContentResolver().query(
-                        MovieEntry.buildMovieUri(Integer.parseInt(id_string)),
-                        null,
-                        null,
-                        null,
-                        null
-                );
-                retData.isFavorite = (cursor.getCount() >= 1);
-                return retData;
+                if ( movieExtraDataJsonStr != null )
+                    retData = getMovieExtraDataFromJson(movieExtraDataJsonStr);
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
             }
-
-            return null;
+            Cursor cursor = getContext().getContentResolver().query(
+                    MovieEntry.buildMovieUri(Integer.parseInt(id_string)),
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            retData.isFavorite = (cursor.getCount() >= 1);
+            return retData;
         }
         private MovieExtraData getMovieExtraDataFromJson(String jsonStr)
                 throws JSONException {
@@ -234,21 +251,23 @@ public class DetailActivityFragment extends Fragment {
             JSONObject review = movieExtraJson.getJSONObject(OWM_REVIEWS);
             JSONArray youtube = trailers.getJSONArray(OWM_YOUTUBE);
             JSONArray review_results = review.getJSONArray(OWN_RESULTS);
-
+            List<String> tl = new ArrayList<String>();
             for (int i = 0; i < youtube.length(); i++) {
                 JSONObject movie = youtube.getJSONObject(i);
                 String type = movie.getString(OWN_TYPE);
                 if ( type.equals( "Trailer")) {
-                    movieExtra.trailer = movie.getString(OWN_SOURCE);
-                    break;
+                    tl.add(movie.getString(OWN_SOURCE));
                 }
             }
+            movieExtra.trailers = new String[tl.size()];
+            for (int i = 0; i <tl.size() ; i++) {
+                movieExtra.trailers[i] = tl.get(i);
+            }
+
             movieExtra.reviews = new String[review_results.length()];
             for (int i = 0; i < review_results.length(); i++) {
                 movieExtra.reviews[i] = review_results.getJSONObject(i).getString(OWN_CONTENT);
             }
-
-            Log.v( LOG_TAG, "trailer: " + movieExtra.trailer);
             for (String s : movieExtra.reviews) {
                 Log.v(LOG_TAG, "review: " + s);
             }
@@ -257,10 +276,10 @@ public class DetailActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieExtraData result) {
             if (result != null) {
-                if (result.trailer != null) {
+                favoriteTextView.setChecked(result.isFavorite);
+                if (result.trailers != null && result.trailers.length > 0 ) {
                     mTrailerButton.setClickable(true);
-                    mTrailerButton.setTag(result.trailer);
-                    favoriteTextView.setChecked(result.isFavorite);
+                    mTrailerButton.setTag(result.trailers[0]);
                 } else {
                     mTrailerButton.setText("No Trailer");
                     mTrailerButton.setClickable(false);
