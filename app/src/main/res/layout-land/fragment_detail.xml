@@ -83,17 +83,14 @@
                         android:paddingTop="10dp"
                         />
 
-                    <ToggleButton
-                        android:id="@+id/favorite_button"
+                    <CheckBox
+                        android:id="@+id/favorite_checkbox"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:drawableTop="@android:drawable/btn_star"
+                        android:button="@android:drawable/btn_star"
                         android:gravity="center"
-                        android:textOff=""
-                        android:textOn=""
-                        android:textSize="0dp"
-                        android:background="#00ffffff"
                         />
+
                 </LinearLayout>
             </LinearLayout>
 

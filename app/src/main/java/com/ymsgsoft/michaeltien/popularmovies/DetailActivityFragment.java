@@ -15,11 +15,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import com.squareup.picasso.Picasso;
 import com.ymsgsoft.michaeltien.popularmovies.data.MovieContract.MovieEntry;
@@ -48,7 +48,7 @@ public class DetailActivityFragment extends Fragment {
     @Bind(R.id.overview_textView) TextView overviewTextView;
     @Bind(R.id.release_date_text_view) TextView dateTextView;
     @Bind(R.id.rating_text_view) TextView rateTextView;
-    @Bind(R.id.favorite_button) ToggleButton favoriteButton;
+    @Bind(R.id.favorite_checkbox) CheckBox favoriteCheckBox;
     private Button mTrailerButton;
     //private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
@@ -76,7 +76,7 @@ public class DetailActivityFragment extends Fragment {
         } else {
             return rootView;
         }
-        favoriteButton.setOnClickListener(new CompoundButton.OnClickListener() {
+        favoriteCheckBox.setOnClickListener(new CompoundButton.OnClickListener() {
 
             @Override
             public void onClick(View view) {
@@ -85,13 +85,10 @@ public class DetailActivityFragment extends Fragment {
                 editor.putBoolean("FavoriteDirty", true);
                 editor.commit();
 
-                if (!favoriteButton.isChecked()) {
-                    // state change didn't change display, need to change display by setActivated
-                    favoriteButton.setActivated(false);
+                if (!favoriteCheckBox.isChecked()) {
                     // delete from list
                     int rowCount = getActivity().getContentResolver().delete(MovieEntry.buildMovieUri(Integer.parseInt(movieObject.id_string)), null, null);
                 } else {
-                    favoriteButton.setActivated(true);
                     // add to list
                     ContentValues values = createMovieValues(movieObject);
                     Uri movieInsertUri = getActivity().getContentResolver().insert(MovieEntry.CONTENT_URI, values);
@@ -299,8 +296,7 @@ public class DetailActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieExtraData result) {
             if (result != null) {
-                favoriteButton.setChecked(result.isFavorite);
-                favoriteButton.setActivated(result.isFavorite);
+                favoriteCheckBox.setChecked(result.isFavorite);
                 if (result.trailers != null && result.trailers.length > 0) {
                     mTrailerButton.setClickable(true);
                     mTrailerButton.setTag(result.trailers[0]);
