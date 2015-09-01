@@ -15,10 +15,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckedTextView;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.squareup.picasso.Picasso;
 import com.ymsgsoft.michaeltien.popularmovies.data.MovieContract.MovieEntry;
@@ -43,11 +44,11 @@ import butterknife.ButterKnife;
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
-    @Bind(R.id.favorite_checkedTextView)  CheckedTextView favoriteTextView;
     @Bind(R.id.detail_title_textView) TextView titleTextView;
     @Bind(R.id.overview_textView) TextView overviewTextView;
     @Bind(R.id.release_date_text_view) TextView dateTextView;
     @Bind(R.id.rating_text_view) TextView rateTextView;
+    @Bind(R.id.favorite_button) ToggleButton favoriteButton;
     private Button mTrailerButton;
     //private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
@@ -75,40 +76,43 @@ public class DetailActivityFragment extends Fragment {
         } else {
             return rootView;
         }
-        favoriteTextView.setOnClickListener(new View.OnClickListener() {
+        favoriteButton.setOnClickListener(new CompoundButton.OnClickListener() {
+
             @Override
             public void onClick(View view) {
-                // set dirty flag
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
                 SharedPreferences.Editor editor = sharedPref.edit();
                 editor.putBoolean("FavoriteDirty", true);
                 editor.commit();
 
-                if ( favoriteTextView.isChecked()) {
-                    favoriteTextView.setChecked(false);
+                if (!favoriteButton.isChecked()) {
+                    // state change didn't change display, need to change display by setActivated
+                    favoriteButton.setActivated(false);
                     // delete from list
                     int rowCount = getActivity().getContentResolver().delete(MovieEntry.buildMovieUri(Integer.parseInt(movieObject.id_string)), null, null);
                 } else {
-                    favoriteTextView.setChecked(true);
+                    favoriteButton.setActivated(true);
                     // add to list
                     ContentValues values = createMovieValues(movieObject);
-                    Uri movieInsertUri = getActivity().getContentResolver().insert(MovieEntry.CONTENT_URI, values );
+                    Uri movieInsertUri = getActivity().getContentResolver().insert(MovieEntry.CONTENT_URI, values);
                 }
             }
+
             private ContentValues createMovieValues(MovieObject mv) {
                 ContentValues movieValues = new ContentValues();
-                movieValues.put(MovieEntry.COLUMN_MOVIE_ID, Integer.parseInt(mv.id_string ));
-                movieValues.put(MovieEntry.COLUMN_TITLE, mv.title );
-                movieValues.put(MovieEntry.COLUMN_ORIGINAL_TITLE, mv.original_tile );
+                movieValues.put(MovieEntry.COLUMN_MOVIE_ID, Integer.parseInt(mv.id_string));
+                movieValues.put(MovieEntry.COLUMN_TITLE, mv.title);
+                movieValues.put(MovieEntry.COLUMN_ORIGINAL_TITLE, mv.original_tile);
                 movieValues.put(MovieEntry.COLUMN_OVERVIEW, mv.overview);
-                movieValues.put(MovieEntry.COLUMN_POSTER_PATH, mv.poster_path );
-                movieValues.put(MovieEntry.COLUMN_BACKDROP_PATH, mv.backdrop_path );
+                movieValues.put(MovieEntry.COLUMN_POSTER_PATH, mv.poster_path);
+                movieValues.put(MovieEntry.COLUMN_BACKDROP_PATH, mv.backdrop_path);
                 movieValues.put(MovieEntry.COLUMN_RELEASE_DATE, mv.release_date);
                 movieValues.put(MovieEntry.COLUMN_POPULARITY, mv.popularity);
                 movieValues.put(MovieEntry.COLUMN_VOTE_AVERAGE, mv.vote_average);
                 return movieValues;
             }
         });
+
         if ( mTask != null) {
             if ( mTask.getStatus() != AsyncTask.Status.FINISHED )
                 mTask.cancel(true);
@@ -295,7 +299,8 @@ public class DetailActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieExtraData result) {
             if (result != null) {
-                favoriteTextView.setChecked(result.isFavorite);
+                favoriteButton.setChecked(result.isFavorite);
+                favoriteButton.setActivated(result.isFavorite);
                 if (result.trailers != null && result.trailers.length > 0) {
                     mTrailerButton.setClickable(true);
                     mTrailerButton.setTag(result.trailers[0]);

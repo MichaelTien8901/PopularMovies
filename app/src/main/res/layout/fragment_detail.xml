@@ -82,28 +82,17 @@
                         android:paddingTop="10dp"
                         />
 
-                    <CheckedTextView
+                    <ToggleButton
+                        android:id="@+id/favorite_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0"
-                        android:text="Favorite"
-                        android:id="@+id/favorite_checkedTextView"
-                        android:clickable="true"
-                        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
-                        android:paddingLeft="10dp"
-                        android:textIsSelectable="false"
-                        android:textSize="20sp"
-                        android:singleLine="false"
-                        android:paddingTop="2dp" />
-                    <ImageButton
-                        android:id="@+id/favorite_button"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:layout_gravity="center"
-                        android:src="@android:drawable/btn_star"
+                        android:drawableTop="@android:drawable/btn_star"
+                        android:gravity="center"
+                        android:textOff=""
+                        android:textOn=""
+                        android:textSize="0dp"
                         android:background="#00ffffff"
-                        android:layout_weight="0"
-                        android:clickable="true" />
+                         />
                 </LinearLayout>
             </LinearLayout>
 
