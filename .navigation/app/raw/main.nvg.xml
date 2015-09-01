@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<navigationModel
+  ns = "http://schemas.android.com?import=com.android.tools.idea.editors.navigation.model.*">
+  <locations  
+    class = "java.util.ArrayList">
+    <statePointEntry>
+      <state      
+        class = "com.android.tools.idea.editors.navigation.model.ActivityState"      
+        className = "com.ymsgsoft.michaeltien.popularmovies.MainActivity"/>
+      <point      
+        x = "-20"      
+        y = "24"/>
+    </statePointEntry>
+    <statePointEntry>
+      <state      
+        class = "com.android.tools.idea.editors.navigation.model.ActivityState"      
+        className = "com.ymsgsoft.michaeltien.popularmovies.DetailActivity"/>
+      <point      
+        x = "1604"      
+        y = "40"/>
+    </statePointEntry>
+    <statePointEntry>
+      <state      
+        class = "com.android.tools.idea.editors.navigation.model.ActivityState"      
+        className = "com.ymsgsoft.michaeltien.popularmovies.SettingsActivity"/>
+      <point      
+        x = "636"      
+        y = "72"/>
+    </statePointEntry>
+  </locations>
+</navigationModel>

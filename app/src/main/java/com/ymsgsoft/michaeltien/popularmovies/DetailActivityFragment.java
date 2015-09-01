@@ -51,7 +51,7 @@ public class DetailActivityFragment extends Fragment {
     private Button mTrailerButton;
     //private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
-
+    private static FetchMovieExtraTask mTask = null;
     public DetailActivityFragment() {
     }
 
@@ -61,10 +61,20 @@ public class DetailActivityFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         ButterKnife.bind(this, rootView);
         //favoriteTextView = (CheckedTextView) rootView.findViewById(R.id.favorite_checkedTextView);
+        /*
         String intent_key_prefix = getString(R.string.package_prefix);
         Intent intent = getActivity().getIntent();
         // get movie object from intent via Parcel
         final MovieObject movieObject = intent.getParcelableExtra(intent_key_prefix + getString(R.string.intent_key_movie_object));
+        */
+        String ARG_ITEM_ID = getString(R.string.package_prefix) + getString(R.string.intent_key_movie_object);
+        final MovieObject movieObject;
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            movieObject = arguments.getParcelable(ARG_ITEM_ID);
+        } else {
+            return rootView;
+        }
         favoriteTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -94,13 +104,18 @@ public class DetailActivityFragment extends Fragment {
                 movieValues.put(MovieEntry.COLUMN_POSTER_PATH, mv.poster_path );
                 movieValues.put(MovieEntry.COLUMN_BACKDROP_PATH, mv.backdrop_path );
                 movieValues.put(MovieEntry.COLUMN_RELEASE_DATE, mv.release_date);
-                movieValues.put(MovieEntry.COLUMN_POPULARITY, mv.popularity );
+                movieValues.put(MovieEntry.COLUMN_POPULARITY, mv.popularity);
                 movieValues.put(MovieEntry.COLUMN_VOTE_AVERAGE, mv.vote_average);
                 return movieValues;
             }
         });
+        if ( mTask != null) {
+            if ( mTask.getStatus() != AsyncTask.Status.FINISHED )
+                mTask.cancel(true);
+        }
+        mTask = new FetchMovieExtraTask();
+        mTask.execute(movieObject.id_string);
 
-        new FetchMovieExtraTask().execute(movieObject.id_string);
         String post_url = getString(R.string.picture_url_prefix) + movieObject.poster_path;
         String backdrop_url = getString(R.string.backdrop_url_prefix) + movieObject.backdrop_path;
                 Picasso.with(getActivity())
@@ -157,7 +172,6 @@ public class DetailActivityFragment extends Fragment {
             MovieExtraData retData = new MovieExtraData();
             // Will contain the raw JSON response as a string.
             String movieExtraDataJsonStr = null;
-
             try {
                 //  http://api.themoviedb.org/3/movie/102899?api_key=[key]&append_to_response=trailers,reviews
                 final String MOVIEDB_BASE_URL =
@@ -223,15 +237,20 @@ public class DetailActivityFragment extends Fragment {
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
             }
-            Cursor cursor = getContext().getContentResolver().query(
-                    MovieEntry.buildMovieUri(Integer.parseInt(id_string)),
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            retData.isFavorite = (cursor.getCount() >= 1);
-            return retData;
+            try {
+                Cursor cursor = getContext().getContentResolver().query(
+                        MovieEntry.buildMovieUri(Integer.parseInt(id_string)),
+                        null,
+                        null,
+                        null,
+                        null
+                );
+                retData.isFavorite = (cursor.getCount() >= 1);
+                cursor.close();
+                return retData;
+            } catch (Exception e) {
+                return null;
+            }
         }
         private MovieExtraData getMovieExtraDataFromJson(String jsonStr)
                 throws JSONException {
@@ -277,7 +296,7 @@ public class DetailActivityFragment extends Fragment {
         protected void onPostExecute(MovieExtraData result) {
             if (result != null) {
                 favoriteTextView.setChecked(result.isFavorite);
-                if (result.trailers != null && result.trailers.length > 0 ) {
+                if (result.trailers != null && result.trailers.length > 0) {
                     mTrailerButton.setClickable(true);
                     mTrailerButton.setTag(result.trailers[0]);
                 } else {
@@ -288,10 +307,13 @@ public class DetailActivityFragment extends Fragment {
                 mTrailerButton.setVisibility(View.INVISIBLE);
                 // nothing retrieved, show error
                 Context context = getActivity();
-                CharSequence text = context.getString(R.string.server_error);
-                int duration = Toast.LENGTH_LONG;
-                Toast.makeText(context, text, duration).show();
+                if (context != null) {
+                    CharSequence text = context.getString(R.string.server_error);
+                    int duration = Toast.LENGTH_LONG;
+                    Toast.makeText(context, text, duration).show();
+                }
             }
+            DetailActivityFragment.mTask = null;
         }
     }
 }

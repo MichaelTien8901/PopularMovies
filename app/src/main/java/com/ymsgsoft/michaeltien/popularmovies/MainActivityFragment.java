@@ -1,7 +1,6 @@
 package com.ymsgsoft.michaeltien.popularmovies;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -58,6 +57,11 @@ public class MainActivityFragment extends Fragment {
     public static final int COL_POPULARITY = 8;
     public static final int COL_VOTE_AVERAGE = 9;
 
+    /**
+        * The fragment's current callback object, which is notified of list item clicks.
+       */
+    private Callbacks mCallbacks = sDummyCallbacks;
+
     private void processDirtyFlag() {
         MainActivity mainActivity = (MainActivity) getActivity();
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mainActivity);
@@ -69,6 +73,28 @@ public class MainActivityFragment extends Fragment {
             }
         }
     }
+    /**
+         * A callback interface that all activities containing this fragment must
+         * implement. This mechanism allows activities to be notified of item
+         * selections.
+         */
+    public interface Callbacks {
+    /**
+         * Callback for when an item has been selected.
+         */
+        public void onItemSelected(int position);
+    }
+    /**
+     * A dummy implementation of the {@link Callbacks} interface that does
+     * nothing. Used only when this fragment is not attached to an activity.
+     */
+    private static Callbacks sDummyCallbacks = new Callbacks() {
+        @Override
+        public void onItemSelected(int position) {
+        }
+    };
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -84,16 +110,21 @@ public class MainActivityFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-
+                mCallbacks.onItemSelected(position);
+/*
                 MovieObject movie_object = mMovieAdapter.getItem(position);
                 Intent detail_intent = new Intent(getActivity(), DetailActivity.class);
                 String prefix = getString(R.string.package_prefix);
                 // putExtra a parcel movie object
                 detail_intent.putExtra(prefix + getString(R.string.intent_key_movie_object), movie_object);
                 startActivity(detail_intent);
+*/
             }
         });
         gridView.setAdapter(mMovieAdapter);
+        if ( mainActivity.mTwoPane) {
+            setActivateOnItemClick(true);
+        }
         //UpdateMoviesList();
         return rootView;
     }
@@ -110,7 +141,9 @@ public class MainActivityFragment extends Fragment {
         }
     }
     private List<MovieObject> mMoveList;
-
+    public MovieObject getMovieObject(int index) {
+        return (MovieObject) mMoveList.get(index);
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -192,9 +225,10 @@ public class MainActivityFragment extends Fragment {
                    mv.vote_average = cursor.getDouble(COL_VOTE_AVERAGE);
                    result.add(mv);
                } while( cursor.moveToNext());
-               return result;
             }
-            return null;
+            cursor.close();
+            return result;
+
         }
         @Override
         protected void onPostExecute(Cursor cursor) {
@@ -386,5 +420,27 @@ public class MainActivityFragment extends Fragment {
             Log.v(LOG_TAG, "OnChange with Uri");
 
         }
+    }
+    public void setActivateOnItemClick(boolean activateOnItemClick) {
+        // When setting CHOICE_MODE_SINGLE, GridView will automatically
+        // give items the 'activated' state when touched.
+        gridView.setChoiceMode(activateOnItemClick
+                ? GridView.CHOICE_MODE_SINGLE
+                : GridView.CHOICE_MODE_NONE);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (!(context instanceof Callbacks)) {
+            throw new IllegalStateException("Activity must implement fragment's callbacks.");
+        }
+        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = sDummyCallbacks;
     }
 }
