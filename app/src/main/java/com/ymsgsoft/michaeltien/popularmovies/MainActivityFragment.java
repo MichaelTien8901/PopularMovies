@@ -166,14 +166,15 @@ public class MainActivityFragment extends Fragment {
         // for two panel only
         mMovieObserver = new MovieObserver(null);
         getActivity().getContentResolver().registerContentObserver(
-                MovieEntry.CONTENT_URI, true, mMovieObserver );
+                MovieEntry.CONTENT_URI, true, mMovieObserver);
 
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().getContentResolver().unregisterContentObserver( mMovieObserver);
+        getActivity().getContentResolver().unregisterContentObserver(mMovieObserver);
+        mMovieObserver = null; // release it
     }
 
     public void UpdateMoviesList() {
@@ -208,8 +209,7 @@ public class MainActivityFragment extends Fragment {
                             null);
             return cursor;
         }
-        List<MovieObject> getListMovieObjectFromCursor(Cursor cursor)
-        {
+        List<MovieObject> getListMovieObjectFromCursor(Cursor cursor) {
             List<MovieObject> result = new ArrayList<MovieObject>();
             if ( cursor.moveToFirst()) {
                do {
@@ -226,7 +226,6 @@ public class MainActivityFragment extends Fragment {
                    result.add(mv);
                } while( cursor.moveToNext());
             }
-            cursor.close();
             return result;
 
         }
@@ -398,27 +397,25 @@ public class MainActivityFragment extends Fragment {
             }
         }
     }
-    public class MovieObserver extends ContentObserver {
+    private class MovieObserver extends ContentObserver {
         private final String LOG_TAG = MovieObserver.class.getSimpleName();
         public MovieObserver(Handler handler) {
             super(handler);
         }
 
         @Override
-        public void onChange(boolean selfChange) {
-            // two panel mode, update favorite grid view
-            this.onChange(selfChange, null);
-            Log.v(LOG_TAG, "OnChange");
-            MainActivityFragment fm= (MainActivityFragment)getActivity()
-                    .getSupportFragmentManager()
-                    .findFragmentById(R.id.container);
-            new FetchFavoriteTask();
-        }
-
-        @Override
         public void onChange(boolean selfChange, Uri uri) {
             Log.v(LOG_TAG, "OnChange with Uri");
-
+            if (((MainActivity) getActivity()).menu_selected == 1 ) {
+                mMoveList = null;
+                // clear dirtyFlag
+                MainActivity mainActivity = (MainActivity) getActivity();
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mainActivity);
+                Boolean dirty_flag = sharedPref.getBoolean("FavoriteDirty", false);
+                sharedPref.edit().putBoolean("FavoriteDirty", false).commit();
+                // update list
+                new FetchFavoriteTask().execute();
+            }
         }
     }
     public void setActivateOnItemClick(boolean activateOnItemClick) {

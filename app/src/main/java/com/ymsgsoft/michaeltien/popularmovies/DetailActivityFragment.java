@@ -69,13 +69,10 @@ public class DetailActivityFragment extends Fragment {
         final MovieObject movieObject = intent.getParcelableExtra(intent_key_prefix + getString(R.string.intent_key_movie_object));
         */
         String ARG_ITEM_ID = getString(R.string.package_prefix) + getString(R.string.intent_key_movie_object);
-        final MovieObject movieObject;
         Bundle arguments = getArguments();
-        if (arguments != null) {
-            movieObject = arguments.getParcelable(ARG_ITEM_ID);
-        } else {
-            return rootView;
-        }
+        if (arguments == null) return rootView;
+
+        final MovieObject movieObject = arguments.getParcelable(ARG_ITEM_ID);
         favoriteCheckBox.setOnClickListener(new CompoundButton.OnClickListener() {
 
             @Override
@@ -110,6 +107,7 @@ public class DetailActivityFragment extends Fragment {
             }
         });
 
+        // prevent multiple AsyncTask running
         if ( mTask != null) {
             if ( mTask.getStatus() != AsyncTask.Status.FINISHED )
                 mTask.cancel(true);

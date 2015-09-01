@@ -52,10 +52,10 @@ public class MainActivity extends AppCompatActivity
         menu_selected = position;
         switch (position) {
             case 0:
-                mTitle = "Popular Movies";
+                mTitle = getString(R.string.menu_popular_movies);
                 break;
             case 1:
-                mTitle = "Favorite Movies";
+                mTitle = getString(R.string.menu_favorite);
                 break;
         }
         MainActivityFragment mFragment =
