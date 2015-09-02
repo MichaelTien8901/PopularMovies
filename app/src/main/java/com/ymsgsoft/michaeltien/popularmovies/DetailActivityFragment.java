@@ -46,6 +46,9 @@ import butterknife.ButterKnife;
  * A placeholder fragment containing a simple view.
  */
 public class DetailActivityFragment extends Fragment {
+    public static final String DETAIL_MOVIE_ID = "DETAIL_MOVIE_ID";
+    public static final String DETAIL_REVIEWS = "DETAIL_REVIEWS";
+    public static final String DETAIL_TRAILERS = "DETAIL_TRAILERS";
     @Bind(R.id.detail_title_textView) TextView titleTextView;
     @Bind(R.id.overview_textView) TextView overviewTextView;
     @Bind(R.id.release_date_text_view) TextView dateTextView;
@@ -65,11 +68,15 @@ public class DetailActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         ButterKnife.bind(this, rootView);
-        //favoriteTextView = (CheckedTextView) rootView.findViewById(R.id.favorite_checkedTextView);
+        if ( savedInstanceState != null && savedInstanceState.containsKey(DETAIL_MOVIE_ID)) {
+            mExtraData = new MovieExtraData();
+            mExtraData.movie_id = savedInstanceState.getString(DETAIL_MOVIE_ID);
+            mExtraData.trailers = savedInstanceState.getStringArrayList(DETAIL_TRAILERS);
+            mExtraData.reviews = savedInstanceState.getStringArrayList(DETAIL_REVIEWS);
+        }
         /*
         String intent_key_prefix = getString(R.string.package_prefix);
         Intent intent = getActivity().getIntent();
-        // get movie object from intent via Parcel
         final MovieObject movieObject = intent.getParcelableExtra(intent_key_prefix + getString(R.string.intent_key_movie_object));
         */
         String ARG_ITEM_ID = getString(R.string.package_prefix) + getString(R.string.intent_key_movie_object);
@@ -147,6 +154,17 @@ public class DetailActivityFragment extends Fragment {
         });
         return rootView;
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if ( mExtraData != null) {
+            outState.putString(DETAIL_MOVIE_ID, mExtraData.movie_id);
+                    outState.putStringArrayList(DETAIL_REVIEWS, mExtraData.reviews);
+            outState.putStringArrayList(DETAIL_TRAILERS, mExtraData.trailers);
+        }
+    }
+
     private void OpenMediaPlayer(String path) {
         String youtube_prefix = "https://www.youtube.com/v/";
         // String youtube_prefix = "http://www.youtube.com/watch?v=";
@@ -158,88 +176,106 @@ public class DetailActivityFragment extends Fragment {
         }
     }
     private class MovieExtraData {
-        String[] trailers;
-        String[] reviews;
+        ArrayList<String> trailers;
+        ArrayList<String> reviews;
         Boolean isFavorite;
+        String movie_id;
+        public MovieExtraData()
+        {
+            this("");
+        }
+        public MovieExtraData(String id) {
+            trailers = new ArrayList<String>();
+            reviews = new ArrayList<String>();
+            isFavorite = false;
+            movie_id = id;
+        }
     };
+    private MovieExtraData mExtraData;
 
     public class FetchMovieExtraTask extends AsyncTask<String, Void, MovieExtraData> {
         private final String LOG_TAG = FetchMovieExtraTask.class.getSimpleName();
         @Override
         protected MovieExtraData doInBackground(String... params) {
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
+            MovieExtraData retData;
             String id_string = params[0];
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            MovieExtraData retData = new MovieExtraData();
-            // Will contain the raw JSON response as a string.
-            String movieExtraDataJsonStr = null;
-            try {
-                //  http://api.themoviedb.org/3/movie/102899?api_key=[key]&append_to_response=trailers,reviews
-                final String MOVIEDB_BASE_URL =
-                        "http://api.themoviedb.org/3/movie";
-                final String API_KEY_PARAM = "api_key";
-                String api_key = getString(R.string.API_key);
-                final String EXTRA_PARAM = "append_to_response";
-                final String extra_data = "trailers,reviews";
+            if (mExtraData != null && id_string.equals(mExtraData.movie_id)) {
+                retData = mExtraData;
+            } else {
+                retData = new MovieExtraData(id_string); // given initial value prevent exception
+                HttpURLConnection urlConnection = null;
+                BufferedReader reader = null;
+                // Will contain the raw JSON response as a string.
+                String movieExtraDataJsonStr = null;
+                try {
+                    //  http://api.themoviedb.org/3/movie/102899?api_key=[key]&append_to_response=trailers,reviews
+                    final String MOVIEDB_BASE_URL =
+                            "http://api.themoviedb.org/3/movie";
+                    final String API_KEY_PARAM = "api_key";
+                    String api_key = getString(R.string.API_key);
+                    final String EXTRA_PARAM = "append_to_response";
+                    final String extra_data = "trailers,reviews";
 
-                Uri builtUri = Uri.parse(MOVIEDB_BASE_URL).buildUpon()
-                        .appendPath(id_string)
-                        .appendQueryParameter(API_KEY_PARAM, api_key)
-                        .appendQueryParameter(EXTRA_PARAM, extra_data)
-                        .build();
-                URL url = new URL(builtUri.toString());
+                    Uri builtUri = Uri.parse(MOVIEDB_BASE_URL).buildUpon()
+                            .appendPath(id_string)
+                            .appendQueryParameter(API_KEY_PARAM, api_key)
+                            .appendQueryParameter(EXTRA_PARAM, extra_data)
+                            .build();
+                    URL url = new URL(builtUri.toString());
 
-                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
-                // Create the request to themoviedb.org, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
+                    Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+                    // Create the request to themoviedb.org, and open the connection
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.connect();
 
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    throw new IOException("can't open IO Stream");
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
+                    // Read the input stream into a String
+                    InputStream inputStream = urlConnection.getInputStream();
+                    StringBuffer buffer = new StringBuffer();
+                    if (inputStream == null) {
+                        throw new IOException("can't open IO Stream");
+                    }
+                    reader = new BufferedReader(new InputStreamReader(inputStream));
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                        // But it does make debugging a *lot* easier if you print out the completed
+                        // buffer for debugging.
+                        buffer.append(line + "\n");
+                    }
 
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    throw new IOException("stream empty");
-                }
-                movieExtraDataJsonStr = buffer.toString();
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
-                // to parse it.
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
+                    if (buffer.length() == 0) {
+                        // Stream was empty.  No point in parsing.
+                        throw new IOException("stream empty");
+                    }
+                    movieExtraDataJsonStr = buffer.toString();
+                } catch (IOException e) {
+                    Log.e(LOG_TAG, "Error ", e);
+                    // If the code didn't successfully get the weather data, there's no point in attemping
+                    // to parse it.
+                } finally {
+                    if (urlConnection != null) {
+                        urlConnection.disconnect();
+                    }
+                    if (reader != null) {
+                        try {
+                            reader.close();
+                        } catch (final IOException e) {
+                            Log.e(LOG_TAG, "Error closing stream", e);
+                        }
                     }
                 }
+                try {
+                    if (movieExtraDataJsonStr != null) {
+                        retData = getMovieExtraDataFromJson(movieExtraDataJsonStr);
+                        retData.movie_id = id_string;
+                    }
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                }
             }
-            try {
-                if ( movieExtraDataJsonStr != null )
-                    retData = getMovieExtraDataFromJson(movieExtraDataJsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-            }
+            // isFarorite value using persistent storage
             try {
                 Cursor cursor = getContext().getContentResolver().query(
                         MovieEntry.buildMovieUri(Integer.parseInt(id_string)),
@@ -281,14 +317,14 @@ public class DetailActivityFragment extends Fragment {
                     tl.add(movie.getString(OWN_SOURCE));
                 }
             }
-            movieExtra.trailers = new String[tl.size()];
+            movieExtra.trailers.clear();
             for (int i = 0; i <tl.size() ; i++) {
-                movieExtra.trailers[i] = tl.get(i);
+                movieExtra.trailers.add(tl.get(i));
             }
 
-            movieExtra.reviews = new String[review_results.length()];
+            movieExtra.reviews.clear();
             for (int i = 0; i < review_results.length(); i++) {
-                movieExtra.reviews[i] = review_results.getJSONObject(i).getString(OWN_CONTENT);
+                movieExtra.reviews.add(review_results.getJSONObject(i).getString(OWN_CONTENT));
             }
             for (String s : movieExtra.reviews) {
                 Log.v(LOG_TAG, "review: " + s);
@@ -299,15 +335,16 @@ public class DetailActivityFragment extends Fragment {
         protected void onPostExecute(MovieExtraData result) {
             if (result != null) {
                 favoriteCheckBox.setChecked(result.isFavorite);
-                if (result.trailers != null && result.trailers.length > 0) {
+                mExtraData = result;
+                if (result.trailers.size() > 0) {
                     mTrailerButton.setClickable(true);
-                    mTrailerButton.setTag(result.trailers[0]);
+                    mTrailerButton.setTag(result.trailers.get(0));
                 } else {
                     mTrailerButton.setText("No Trailer");
                     mTrailerButton.setClickable(false);
                 }
-                if (result.reviews.length > 0) {
-                    AddReviewText(result.reviews);
+                if (result.reviews.size() > 0) {
+                    addReviewText(result.reviews);
                 } else {
                     reviewTextView.setVisibility(View.INVISIBLE);
                 }
@@ -324,7 +361,7 @@ public class DetailActivityFragment extends Fragment {
             DetailActivityFragment.mTask = null;
         }
     }
-    public void AddReviewText(String[] texts) {
+    public void addReviewText(List<String> texts) {
         Context context = getActivity();
         for (String s: texts) {
                 // add separator
