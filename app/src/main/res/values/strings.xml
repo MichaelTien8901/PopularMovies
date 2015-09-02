@@ -27,5 +27,6 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="menu_popular_movies">Popular Movies</string>
     <string name="menu_favorite">Favorite Movies</string>
+    <string name="review">Reviews</string>
 
 </resources>

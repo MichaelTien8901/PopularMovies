@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +51,8 @@ public class DetailActivityFragment extends Fragment {
     @Bind(R.id.release_date_text_view) TextView dateTextView;
     @Bind(R.id.rating_text_view) TextView rateTextView;
     @Bind(R.id.favorite_checkbox) CheckBox favoriteCheckBox;
+    @Bind(R.id.review_textView) TextView reviewTextView;
+    @Bind(R.id.detail_linearLayout)  LinearLayout detailLinearLayout;
     private Button mTrailerButton;
     //private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
@@ -302,6 +306,11 @@ public class DetailActivityFragment extends Fragment {
                     mTrailerButton.setText("No Trailer");
                     mTrailerButton.setClickable(false);
                 }
+                if (result.reviews.length > 0) {
+                    AddReviewText(result.reviews);
+                } else {
+                    reviewTextView.setVisibility(View.INVISIBLE);
+                }
             } else {
                 mTrailerButton.setVisibility(View.INVISIBLE);
                 // nothing retrieved, show error
@@ -313,6 +322,24 @@ public class DetailActivityFragment extends Fragment {
                 }
             }
             DetailActivityFragment.mTask = null;
+        }
+    }
+    public void AddReviewText(String[] texts) {
+        Context context = getActivity();
+        for (String s: texts) {
+                // add separator
+            View line = new View(context);
+            line.setBackgroundColor(Color.DKGRAY);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 4);
+            lp.topMargin = 10;
+            lp.bottomMargin = 10;
+            lp.leftMargin = 5;
+            lp.rightMargin = 5;
+            detailLinearLayout.addView(line, lp);
+
+            TextView tv = new TextView(context);
+            tv.setText(s);
+            detailLinearLayout.addView(tv);
         }
     }
 }

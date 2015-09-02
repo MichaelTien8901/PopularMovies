@@ -12,10 +12,11 @@
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:id="@+id/scrollView" >
+        android:id="@+id/detail_scrollView" >
        <LinearLayout
            android:layout_width="fill_parent"
            android:layout_height="wrap_content"
+           android:id="@+id/detail_linearLayout"
            android:orientation="vertical">
 
            <FrameLayout
@@ -68,7 +69,7 @@
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:id="@+id/release_date_text_view"
                         android:singleLine="false"
-                        android:paddingTop="30dp"
+                        android:paddingTop="16dp"
                         android:paddingLeft="10dp" />
 
                     <TextView
@@ -86,6 +87,8 @@
                         android:id="@+id/favorite_checkbox"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minWidth="50dp"
                         android:button="@android:drawable/btn_star"
                         android:gravity="center"
                          />
@@ -104,6 +107,13 @@
                android:text="Watch Trailer"
                android:id="@+id/trailer_button"
                android:clickable="true" />
+
+           <TextView
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="@string/review"
+               android:id="@+id/review_textView"
+               android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
 
        </LinearLayout>
     </ScrollView>

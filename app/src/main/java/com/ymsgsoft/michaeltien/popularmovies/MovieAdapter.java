@@ -67,7 +67,7 @@ public class MovieAdapter extends ArrayAdapter<MovieObject> {
 
         MovieObject movieObject = data.get(position);
         holder.textTitle.setText(movieObject.title);
-        holder.textTitle.setVisibility(View.INVISIBLE);
+        // holder.textTitle.setVisibility(View.INVISIBLE);
         //String url = "http://image.tmdb.org/t/p/w185/" + movieObject.poster_path;
         String url = context.getString(R.string.picture_url_prefix) + movieObject.poster_path;
         Picasso.with(this.context)

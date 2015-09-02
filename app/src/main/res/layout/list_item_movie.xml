@@ -6,15 +6,13 @@
     >
 
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/list_item_imageIcon"
-        android:minHeight="240dp"
+        android:layout_width="160dp"
+        android:layout_height="240dp"
         android:scaleType="fitXY"
-        android:minWidth="160dp"
-        android:nestedScrollingEnabled="false" />
+        />
     <TextView
-        android:layout_width="fill_parent"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:id = "@+id/list_item_title"
         android:textColor="#f7fbff"
