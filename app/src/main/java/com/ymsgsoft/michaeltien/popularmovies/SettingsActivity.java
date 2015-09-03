@@ -11,9 +11,8 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
-
-import java.util.List;
 
 //import android.preference.RingtonePreference;
 
@@ -29,17 +28,18 @@ import java.util.List;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setupActionBar();
-        // Display the fragment as the main content.
-        getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new GeneralPreferenceFragment())
-                .commit();
-
+        setContentView(R.layout.activity_settings);
+        if (savedInstanceState == null) {
+            getFragmentManager().beginTransaction()
+                    .add(R.id.settings_container, new GeneralPreferenceFragment())
+                    .commit();
+        }
     }
 
     /**
@@ -53,6 +53,7 @@ public class SettingsActivity extends PreferenceActivity {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
         */
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
 
@@ -79,7 +80,7 @@ public class SettingsActivity extends PreferenceActivity {
     /**
      * {@inheritDoc}
      */
-    @Override
+    //@Override
     public boolean onIsMultiPane() {
         return isXLargeTablet(this);
     }
@@ -97,14 +98,13 @@ public class SettingsActivity extends PreferenceActivity {
     /**
      * {@inheritDoc}
      */
+    /*
     @Override
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public void onBuildHeaders(List<Header> target) {
-        /* conflict with setting values, change by Michael Tien
         loadHeadersFromResource(R.xml.pref_headers, target);
-        */
     }
-
+    */
     /**
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
