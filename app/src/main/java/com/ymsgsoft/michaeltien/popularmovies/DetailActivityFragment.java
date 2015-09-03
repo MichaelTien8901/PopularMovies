@@ -11,8 +11,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -49,6 +54,7 @@ public class DetailActivityFragment extends Fragment {
     public static final String DETAIL_MOVIE_ID = "DETAIL_MOVIE_ID";
     public static final String DETAIL_REVIEWS = "DETAIL_REVIEWS";
     public static final String DETAIL_TRAILERS = "DETAIL_TRAILERS";
+    public static final String HTTPS_WWW_YOUTUBE_COM_V = "https://www.youtube.com/v/";
     @Bind(R.id.detail_title_textView) TextView titleTextView;
     @Bind(R.id.overview_textView) TextView overviewTextView;
     @Bind(R.id.release_date_text_view) TextView dateTextView;
@@ -60,7 +66,33 @@ public class DetailActivityFragment extends Fragment {
     //private CheckedTextView favoriteTextView;
     private final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
     private static FetchMovieExtraTask mTask = null;
+    private MovieExtraData mExtraData;
+    private ShareActionProvider mShareActionProvider;
     public DetailActivityFragment() {
+        setHasOptionsMenu(true); // enable option for sharing
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.detailfragment, menu);
+        MenuItem menuItem = menu.findItem(R.id.action_share);
+
+        // Get the provider and hold onto it to set/change the share intent.
+        mShareActionProvider =
+                (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+    }
+
+    private Intent createShareMovieIntent() {
+        if ( mExtraData == null ) return null;
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        String shareText = mExtraData.trailers.size() > 0 ?
+                HTTPS_WWW_YOUTUBE_COM_V + mExtraData.trailers.get(0) :
+                "no trailer";
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        shareIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        return shareIntent;
     }
 
     @Override
@@ -166,9 +198,7 @@ public class DetailActivityFragment extends Fragment {
     }
 
     private void OpenMediaPlayer(String path) {
-        String youtube_prefix = "https://www.youtube.com/v/";
-        // String youtube_prefix = "http://www.youtube.com/watch?v=";
-        Intent mediaIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(youtube_prefix+path));
+        Intent mediaIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(HTTPS_WWW_YOUTUBE_COM_V+path));
         if (mediaIntent.resolveActivity(getActivity().getPackageManager()) != null) {
             startActivity(mediaIntent);
         } else {
@@ -190,8 +220,10 @@ public class DetailActivityFragment extends Fragment {
             isFavorite = false;
             movie_id = id;
         }
+        public String getTrailer(int idx) {
+            return trailers.get(idx);
+        }
     };
-    private MovieExtraData mExtraData;
 
     public class FetchMovieExtraTask extends AsyncTask<String, Void, MovieExtraData> {
         private final String LOG_TAG = FetchMovieExtraTask.class.getSimpleName();
@@ -358,7 +390,15 @@ public class DetailActivityFragment extends Fragment {
                     Toast.makeText(context, text, duration).show();
                 }
             }
+            //
             DetailActivityFragment.mTask = null;
+            // Attach an intent to this ShareActionProvider.
+            if (mShareActionProvider != null ) {
+                Intent intent = createShareMovieIntent();
+                mShareActionProvider.setShareIntent(intent);
+            } else {
+                Log.d(LOG_TAG, "Share Action Provider is null?");
+            }
         }
     }
     public void addReviewText(List<String> texts) {
